@@ -12,7 +12,7 @@ buildscript {
 
     ext.deps = [
         gson               : 'com.google.code.gson:gson:2.8.2',
-        androidGradlePlugin: "com.android.tools.build:gradle:7.1.0",
+        androidGradlePlugin: "com.android.tools.build:gradle:7.2.2",
         androidx           : [
             annotation      : 'androidx.annotation:annotation:1.0.2',
             appcompat       : 'androidx.appcompat:appcompat:1.1.0',
@@ -48,6 +48,14 @@ buildscript {
         maven {
             url 'https://maven.google.com'
         }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
+            credentials {
+                username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
+                password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
+            }
+        }
         google()
     }
     dependencies {
@@ -55,6 +63,7 @@ buildscript {
         classpath deps.kotlin.gradlePlugin
         classpath deps.androidGradlePlugin
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.6.0"
+        classpath("com.atlasv.android.plugin:publishlib:1.1.0")
     }
 }
 
@@ -65,6 +74,15 @@ allprojects {
         maven { url 'https://jitpack.io' }
         google()
         maven{ url 'https://s01.oss.sonatype.org/service/local/repositories/releases/content/'}
+
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
+            credentials {
+                username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
+                password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
+            }
+        }
     }
 }
 

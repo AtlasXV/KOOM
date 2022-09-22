@@ -218,6 +218,17 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
     }
   }
 
+  /**
+   * add 2022-06-21 手动触发
+   */
+  fun manualTriggerDump() {
+    SystemInfo.refresh()
+    async {
+      MonitorLog.e(TAG, "manualTriggerDump")
+      dumpAndAnalysis(isManualDump = true)
+    }
+  }
+
   private fun manualDumpHprof() {
     for (hprofFile in manualDumpDir.listFiles().orEmpty()) {
       MonitorLog.i(TAG, "manualDumpHprof upload:${hprofFile.absolutePath}")
@@ -277,19 +288,28 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
           MonitorLogger.addExceptionEvent(content, Logger.ExceptionType.OOM_STACKS)
 
           monitorConfig.reportUploader?.upload(jsonFile, content)
-          monitorConfig.hprofUploader?.upload(hprofFile, OOMHprofUploader.HprofType.ORIGIN)
+          //如果自动删除hprof，就不需要再回传给外部进行上传了
+          if (monitorConfig.enableAutoDeleteCompletedHprof) {
+            kotlin.runCatching { hprofFile.deleteOnExit() }
+          } else {
+            monitorConfig.hprofUploader?.upload(
+              hprofFile,
+              OOMHprofUploader.HprofType.ORIGIN
+            )
+          }
+
         }
       })
   }
 
-  private fun dumpAndAnalysis() {
+  private fun dumpAndAnalysis(isManualDump: Boolean = false) {
     MonitorLog.i(TAG, "dumpAndAnalysis");
     runCatching {
       if (!OOMFileManager.isSpaceEnough()) {
         MonitorLog.e(TAG, "available space not enough", true)
         return@runCatching
       }
-      if (mHasDumped) {
+      if (mHasDumped && !isManualDump) {
         return
       }
       mHasDumped = true

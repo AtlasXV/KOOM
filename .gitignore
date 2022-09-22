@@ -10,3 +10,5 @@ local.properties
 .classpath
 .project
 .settings/
+CHANGELOG.json
+lib_version.txt

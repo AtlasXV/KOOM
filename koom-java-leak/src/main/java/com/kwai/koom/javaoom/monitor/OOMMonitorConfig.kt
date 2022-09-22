@@ -40,7 +40,8 @@ class OOMMonitorConfig(
     val enableHprofDumpAnalysis: Boolean,
 
     val hprofUploader: OOMHprofUploader?,
-    val reportUploader: OOMReportUploader?
+    val reportUploader: OOMReportUploader?,
+    val enableAutoDeleteCompletedHprof: Boolean,
 ) : MonitorConfig<OOMMonitor>() {
 
   class Builder : MonitorConfig.Builder<OOMMonitorConfig> {
@@ -80,6 +81,8 @@ class OOMMonitorConfig(
 
     private var mHprofUploader: OOMHprofUploader? = null
     private var mReportUploader: OOMReportUploader? = null
+
+    private var mEnableAutoDeleteCompletedHprof: Boolean = false //自动删除分析完成的hprof文件
 
     fun setAnalysisMaxTimesPerVersion(analysisMaxTimesPerVersion: Int) = apply {
       mAnalysisMaxTimesPerVersion = analysisMaxTimesPerVersion
@@ -143,6 +146,10 @@ class OOMMonitorConfig(
       mReportUploader = reportUploader
     }
 
+    fun setEnableAutoDeleteCompletedHprof(enableAutoDeleteCompletedHprof: Boolean) = apply {
+      mEnableAutoDeleteCompletedHprof = enableAutoDeleteCompletedHprof
+    }
+
     override fun build() = OOMMonitorConfig(
         analysisMaxTimesPerVersion = mAnalysisMaxTimesPerVersion,
         analysisPeriodPerVersion = mAnalysisPeriodPerVersion,
@@ -159,7 +166,8 @@ class OOMMonitorConfig(
         forceDumpJavaHeapDeltaThreshold = mForceDumpJavaHeapDeltaThreshold,
 
         hprofUploader = mHprofUploader,
-        reportUploader = mReportUploader
+        reportUploader = mReportUploader,
+        enableAutoDeleteCompletedHprof = mEnableAutoDeleteCompletedHprof,
     )
   }
 }
