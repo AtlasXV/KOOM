@@ -18,7 +18,6 @@
 
 package com.kwai.koom.javaoom.monitor
 
-import android.os.Build
 import android.os.SystemClock
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -232,7 +231,7 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
   private fun manualDumpHprof() {
     for (hprofFile in manualDumpDir.listFiles().orEmpty()) {
       MonitorLog.i(TAG, "manualDumpHprof upload:${hprofFile.absolutePath}")
-      monitorConfig.hprofUploader?.upload(hprofFile, OOMHprofUploader.HprofType.STRIPPED)
+      monitorConfig.hprofUploader?.upload(hprofFile, OOMHprofUploader.HprofType.STRIPPED, System.currentTimeMillis())
     }
   }
 
@@ -287,14 +286,16 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
 
           MonitorLogger.addExceptionEvent(content, Logger.ExceptionType.OOM_STACKS)
 
-          monitorConfig.reportUploader?.upload(jsonFile, content)
+          val timeStamp = System.currentTimeMillis()
+          monitorConfig.reportUploader?.upload(jsonFile, content, timeStamp)
           //如果自动删除hprof，就不需要再回传给外部进行上传了
           if (monitorConfig.enableAutoDeleteCompletedHprof) {
             kotlin.runCatching { hprofFile.deleteOnExit() }
           } else {
             monitorConfig.hprofUploader?.upload(
               hprofFile,
-              OOMHprofUploader.HprofType.ORIGIN
+              OOMHprofUploader.HprofType.ORIGIN,
+              timeStamp
             )
           }
 
