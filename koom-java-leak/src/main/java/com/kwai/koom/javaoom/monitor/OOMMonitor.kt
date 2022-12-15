@@ -26,6 +26,7 @@ import com.kwai.koom.base.*
 import com.kwai.koom.base.MonitorManager.getApplication
 import com.kwai.koom.base.loop.LoopMonitor
 import com.kwai.koom.fastdump.ForkJvmHeapDumper
+import com.kwai.koom.javaoom.hprof.ForkStripHeapDumper
 import com.kwai.koom.javaoom.monitor.OOMFileManager.hprofAnalysisDir
 import com.kwai.koom.javaoom.monitor.OOMFileManager.manualDumpDir
 import com.kwai.koom.javaoom.monitor.analysis.AnalysisExtraData
@@ -168,7 +169,11 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
       } else {
         async {
           MonitorLog.i(TAG, "mTrackReasons:${mTrackReasons}")
-          dumpAndAnalysis()
+          if (monitorConfig.oomTrackListener != null) {
+            monitorConfig.oomTrackListener?.onTrack()
+          } else {
+            dumpAndAnalysis()
+          }
         }
       }
 
@@ -218,13 +223,25 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
   }
 
   /**
+  * add 2022-12-15 获取SystemInfo信息
+  */
+  fun getMemInfoString(): String {
+    return SystemInfo.refresh()
+  }
+
+  /**
    * add 2022-06-21 手动触发
+   * forkStrip: true-仅dump裁剪镜像 ，false-正常dump和analysis
    */
-  fun manualTriggerDump() {
+  fun manualTriggerDump(forkStrip: Boolean = false) {
     SystemInfo.refresh()
     async {
       MonitorLog.e(TAG, "manualTriggerDump")
-      dumpAndAnalysis(isManualDump = true)
+      if (forkStrip) {
+        dumpStripHprof()
+      } else {
+        dumpAndAnalysis(isManualDump = true)
+      }
     }
   }
 
@@ -301,6 +318,39 @@ object OOMMonitor : LoopMonitor<OOMMonitorConfig>(), LifecycleEventObserver {
 
         }
       })
+  }
+
+  private fun dumpStripHprof() {
+    MonitorLog.i(TAG, "dumpStripHprof")
+    runCatching {
+      if (!OOMFileManager.isSpaceEnough(analysisDir = false)) {
+        MonitorLog.e(TAG, "available space not enough", true)
+        return@runCatching
+      }
+      mHasDumped = true
+
+      val date = Date()
+
+      val hprofFile = OOMFileManager.createHprofOOMDumpFile(date).apply {
+        createNewFile()
+        setWritable(true)
+        setReadable(true)
+      }
+
+      MonitorLog.i(TAG, "hprof manual dir:$manualDumpDir")
+
+      ForkStripHeapDumper.getInstance().run {
+        dump(hprofFile.absolutePath) //裁剪镜像，下次启动会走manualDumpHprof()上报
+      }
+
+      MonitorLog.i(TAG, "end hprof dump", true)
+      Thread.sleep(1000) // make sure file synced to disk.
+      MonitorLog.i(TAG, "just dump strip end")
+
+    }.onFailure {
+      it.printStackTrace()
+      MonitorLog.i(TAG, "onJvmThreshold Exception " + it.message, true)
+    }
   }
 
   private fun dumpAndAnalysis(isManualDump: Boolean = false) {

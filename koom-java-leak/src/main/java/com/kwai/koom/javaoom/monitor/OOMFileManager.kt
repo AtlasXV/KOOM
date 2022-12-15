@@ -97,8 +97,8 @@ internal object OOMFileManager {
   }
 
   @JvmStatic
-  fun isSpaceEnough(): Boolean {
-    val statFs = StatFs(hprofAnalysisDir.canonicalPath)
+  fun isSpaceEnough(analysisDir: Boolean = true): Boolean {
+    val statFs = StatFs(if (analysisDir) hprofAnalysisDir.canonicalPath else manualDumpDir.canonicalPath)
     val blockSize = statFs.blockSizeLong
     val availableBlocks = statFs.availableBlocks.toLong()
 

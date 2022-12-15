@@ -1,7 +1,7 @@
 name: release
 on:
   push:
-    branches: [ main ]
+    branches: [ none ]
     paths-ignore:
       - 'README.md'
       - '.github/workflows/**'

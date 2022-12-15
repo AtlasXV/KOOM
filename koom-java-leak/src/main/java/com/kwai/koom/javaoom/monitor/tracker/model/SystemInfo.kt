@@ -21,6 +21,7 @@ package com.kwai.koom.javaoom.monitor.tracker.model
 import android.os.Build
 import android.text.TextUtils
 import com.kwai.koom.base.MonitorLog
+import com.kwai.koom.javaoom.monitor.utils.SizeUnit
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -52,7 +53,7 @@ internal object SystemInfo {
   //var dmaZoneInfo: ZoneInfo = ZoneInfo()
   //var normalZoneInfo: ZoneInfo = ZoneInfo()
 
-  fun refresh() {
+  fun refresh(): String {
     lastJavaHeap = javaHeap
     lastMemInfo = memInfo
     lastProcStatus = procStatus
@@ -112,11 +113,14 @@ internal object SystemInfo {
 
     memInfo.rate = 1.0f * memInfo.availableInKb / memInfo.totalInKb
 
-    MonitorLog.i(TAG, "----OOM Monitor Memory----")
-    MonitorLog.i(TAG,"[java] max:${javaHeap.max} used ratio:${(javaHeap.rate * 100).toInt()}%")
-    MonitorLog.i(TAG,"[proc] VmSize:${procStatus.vssInKb}kB VmRss:${procStatus.rssInKb}kB " + "Threads:${procStatus.thread}")
-    MonitorLog.i(TAG,"[meminfo] MemTotal:${memInfo.totalInKb}kB MemFree:${memInfo.freeInKb}kB " + "MemAvailable:${memInfo.availableInKb}kB")
-    MonitorLog.i(TAG,"avaliable ratio:${(memInfo.rate * 100).toInt()}% CmaTotal:${memInfo.cmaTotal}kB ION_heap:${memInfo.IONHeap}kB")
+    val memInfoString = """
+      ----OOM Monitor Memory----
+      [java] max:${SizeUnit.BYTE.toMB(javaHeap.max)}MB , total:${SizeUnit.BYTE.toMB(javaHeap.total)}MB , free:${SizeUnit.BYTE.toMB(javaHeap.free)}MB , used:${SizeUnit.BYTE.toMB(javaHeap.used)}MB , ratio:${(javaHeap.rate * 100).toInt()}%
+      [proc] VmSize:${SizeUnit.KB.toMB(procStatus.vssInKb)}MB , VmRss:${SizeUnit.KB.toMB(procStatus.rssInKb)}MB , Threads:${procStatus.thread}
+      [meminfo] MemTotal:${SizeUnit.KB.toMB(memInfo.totalInKb)}MB , MemFree:${SizeUnit.KB.toMB(memInfo.freeInKb)}MB , MemAvailable:${SizeUnit.KB.toMB(memInfo.availableInKb)}MB , ION_heap:${SizeUnit.KB.toMB(memInfo.IONHeap)}MB , CmaTotal:${SizeUnit.KB.toMB(memInfo.cmaTotal)}MB , ratio:${(memInfo.rate * 100).toInt()}%
+    """.trimIndent()
+    MonitorLog.i(TAG, memInfoString)
+    return memInfoString
   }
 
   data class ProcStatus(var thread: Int = 0, var vssInKb: Int = 0, var rssInKb: Int = 0)

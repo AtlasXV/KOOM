@@ -41,6 +41,7 @@ class OOMMonitorConfig(
 
     val hprofUploader: OOMHprofUploader?,
     val reportUploader: OOMReportUploader?,
+    val oomTrackListener: OOMTrackListener?,
     val enableAutoDeleteCompletedHprof: Boolean,
 ) : MonitorConfig<OOMMonitor>() {
 
@@ -81,6 +82,7 @@ class OOMMonitorConfig(
 
     private var mHprofUploader: OOMHprofUploader? = null
     private var mReportUploader: OOMReportUploader? = null
+    private var mOOMTrackListener: OOMTrackListener? = null
 
     private var mEnableAutoDeleteCompletedHprof: Boolean = false //自动删除分析完成的hprof文件
 
@@ -146,6 +148,10 @@ class OOMMonitorConfig(
       mReportUploader = reportUploader
     }
 
+    fun setOOMTrackListener(trackListener: OOMTrackListener) = apply {
+      mOOMTrackListener = trackListener
+    }
+
     fun setEnableAutoDeleteCompletedHprof(enableAutoDeleteCompletedHprof: Boolean) = apply {
       mEnableAutoDeleteCompletedHprof = enableAutoDeleteCompletedHprof
     }
@@ -167,6 +173,7 @@ class OOMMonitorConfig(
 
         hprofUploader = mHprofUploader,
         reportUploader = mReportUploader,
+        oomTrackListener = mOOMTrackListener,
         enableAutoDeleteCompletedHprof = mEnableAutoDeleteCompletedHprof,
     )
   }
